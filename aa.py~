@@ -1,0 +1,64 @@
+from BeautifulSoup import BeautifulSoup, SoupStrainer
+import requests
+from xgoogle.search import GoogleSearch, SearchError
+import pickle
+import simplejson
+import re
+
+
+searchTerms = [ 'shareholder letter', 'letter to shareholders' ]
+
+def getUrls ( searchTerm ):
+   links = []
+   f = open('output.txt', 'w')
+   try:
+      gs = GoogleSearch( searchTerm)
+      gs.results_per_page = 50
+      results = gs.get_results()
+      for res in results:
+         links.append( res.url.encode("utf8") )
+      pickle.dump( links, f )
+      f.close()
+      return links
+   except SearchError, e:
+      print "Search failed: %s" % e
+
+
+def seeIfShareholderLetter ( urls ):
+    pass
+# if shareholder letter, scrape
+#  for item in urls:
+#     url_page = requests( item );
+# check if url page contains a regex...dear shareholde leter...
+#    if ( page_is_letter ):
+#       saveLetter( url );
+
+def saveLetter( url ):
+    pass
+    #save letter via sql alchemy into database
+
+def checkWords( letter_url ):
+   print "HI!!!\n"
+   r = requests.get( letter_url )
+   txt= r.text
+   words = 'richest men'.split(' ')
+  # words = [ "shareholder", "letter"
+   sentences = re.findall(r"([^.]*\.)" ,txt)  
+   for sentence in sentences:
+      if all(word in sentence for word in words):
+         print sentence
+    
+#   print r.text
+    
+
+
+#links = getUrls( 'shareholder letters' )
+f = open('output.txt', 'r')
+itemList = pickle.load(f)
+print itemList
+for item in itemList: checkWords( item )
+
+#links = simplejson.load( f )
+#print links
+#for item in links: checkWords( item )
+
