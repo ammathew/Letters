@@ -7,9 +7,10 @@ import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from table_def import Letters
-import urllib2
+import urllib
 import scraperwiki
 import pdfminer
+
 
 pdf_url = 'http://www.sec.gov/divisions/investment/13f/13flist2013q4.pdf'
 
@@ -79,7 +80,11 @@ def convert_pdf_to_txt(path):
     codec = 'utf-8'
     laparams = LAParams()
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
-    fp = file(path, 'rb')
+    
+    fp = urllib.urlretrieve( path )
+    fp = open( fp[0], 'rb')
+    print fp
+    print dir( fp )
     interpreter = PDFPageInterpreter(rsrcmgr, device)
     password = ""
     maxpages = 0
@@ -91,6 +96,10 @@ def convert_pdf_to_txt(path):
     device.close()
     str = retstr.getvalue()
     retstr.close()
-    print str
+    return str
 
-convert_pdf_to_txt(path)
+test_url = 'http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp'
+test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
+
+convert_pdf_to_txt(test_remote_pdf)
+
