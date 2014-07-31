@@ -86,20 +86,41 @@ def convert_pdf_to_txt( path ):
 def addPdfToDB( pdfStr ):
     engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
     Session = sessionmaker(bind=engine)
-    session = Session()
+    session_letters = Session()
     new_letter = Letters( pdfStr )
-    session.add(new_letter)
-    session.commit()
+    session_letters.add(new_letter)
+    session_letters.commit()
 
+from table_def_pdfurls import PdfUrl
+from sqlalchemy import update
 
+def startScraping():
+    engine = create_engine('sqlite:///pdf_urls.db', echo=True)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    pdfUrls = session.query(PdfUrl).all()
     
+    for pdf_url in pdfUrls:
+        try:
+            print pdf_url.pdf_url
+            pdfStr = convert_pdf_to_txt( pdf_url.pdf_url )
+            addPdfToDB( pdfStr )
+            pdf_url.scraped = True
+            session.add( pdf_url )
+            print pdf_url.scraped
+            session.commit()
+        except:
+            pass
+            
 
 #url = "http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp"
 #links = scrapePdfUrls( url )
 #addLinksListToDB( links )
 #print aa( 'urls_page_1.txt' )
 
-test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
-pdfStr = convert_pdf_to_txt( test_remote_pdf  )
+#test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
+#pdfStr = convert_pdf_to_txt( test_remote_pdf  )
 
-addPdfToDB( pdfStr )
+#addPdfToDB( pdfStr )
+
+startScraping()
