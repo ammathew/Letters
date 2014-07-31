@@ -1,6 +1,6 @@
 # table_def.py
 from sqlalchemy import create_engine, ForeignKey
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Column, Date, Integer, String, TEXT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
  
@@ -13,7 +13,7 @@ class Letters(Base):
     __tablename__ = "letters"
  
     id = Column(Integer, primary_key=True)
-    letter = Column(String)  
+    letter = Column(TEXT)  
  
     #----------------------------------------------------------------------
     def __init__(self, letter):
