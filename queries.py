@@ -10,7 +10,6 @@ Session = sessionmaker(bind=engine)
 session = Session()
  
 # how to do a SELECT * (i.e. all)
-res = session.query(Letters).all()
-for letter in res:
-    print letter.letter
- 
+search_term = 'Third'
+aa =  session.query( Letters ).filter(Letters.letter.like("%\%s\%"%(search_term))).first()
+print aa.letter

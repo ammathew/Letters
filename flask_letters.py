@@ -1,48 +1,57 @@
 from datetime import datetime
 from flask import Flask, request, jsonify
 
+from flask import make_response
+from functools import wraps, update_wrapper
+from datetime import datetime
+
+import flask
+
+
+
+import sys
+sys.path.insert(0, "/home2/thezeith/opt/python27/lib/python2.7/site-packages/" )
+
+app = flask.Flask(__name__)
+
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from table_def import Letters
+ 
 
-app = Flask(__name__)
 
 engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+def nocache(view):
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Last-Modified'] = datetime.now()
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
+    return update_wrapper(no_cache, view)
 
 @app.route('/')
 def hello_world():
     return 'Hello World!'
 
-@app.route('/the-time')
-def the_time():
-     cur_time = str(datetime.now())
-     return cur_time + ' is the current time!  ...YEAH!'
-
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol', 
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web', 
-        'done': False
-    }
-]
-
 @app.route('/api/search', methods = ['GET'])
+@nocache
 def get_tasks():
-  #  search_term = request.args.get('search_term')
-  #  aa =  session.query( Letters ).filter(Letters.letter.like("%%s%"%(search_term))).first()
-  #  return jsonify( { 'the_term_was' : aa.letter } )
-    return jsonify( { 'tasks': 'asdfdas' } )
-
+    search_term = request.args.get('search_term', 'Third')
+    search_term = str( search_term )
+    try:
+        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).first()
+        session.close()
+        return aa.letter
+    except:
+        return "nothing found"
+  
 
 if __name__ == '__main__':
     app.run()
