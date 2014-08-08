@@ -1,13 +1,11 @@
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 from flask import make_response
 from functools import wraps, update_wrapper
 from datetime import datetime
 
 import flask
-
-
 
 import sys
 sys.path.insert(0, "/home2/thezeith/opt/python27/lib/python2.7/site-packages/" )
@@ -38,7 +36,7 @@ def nocache(view):
 
 @app.route('/')
 def hello_world():
-    return 'Hello World!'
+    return render_template('landing.html')
 
 @app.route('/api/search', methods = ['GET'])
 @nocache
@@ -46,12 +44,16 @@ def get_tasks():
     search_term = request.args.get('search_term', 'Third')
     search_term = str( search_term )
     try:
-        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).first()
+        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).limit(10)
         session.close()
-        return aa.letter
+        bb = []
+        
+        for item in aa:
+            bb.append( item.letter )
+        return jsonify({ "blah" : bb })
     except:
-        return "nothing found"
+        return jsonify({ "blah" : "not found" })
   
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

@@ -1,0 +1,29 @@
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- Optional theme -->
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+<script>
+function doSomething() {
+    console.log('Form submitted!');
+$.get( "/api/search", { search_term: Third } )
+.done(function( data ) {
+console.log( "Data Loaded: " + data );
+});
+    return false;
+}
+</script>
+
+<form onsubmit="return doSomething();" class="my-form">
+    <input type="submit" value="Submit">
+</form>
+
+
+
+
+asdfasda
+
