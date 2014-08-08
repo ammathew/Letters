@@ -8,15 +8,37 @@
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
 <script>
-function doSomething() {
-    console.log('Form submitted!');
-var search_term = $('#formValueId').val();
-$.get( "/api/search", { search_term: search_term } )
-.done(function( data ) {
-console.log( "Data Loaded: " + data );
+  function doSomething() {
+  console.log('Form submitted!');
+  var search_term = $('#formValueId').val();
+  $.get( "/api/search", { search_term: search_term } )
+  .done(function( data ) {
+  $("#letters").html("");
+  console.log( "Data Loaded: " + data );
+  for ( var i = 0; i< data.data.length; i++ ) {
+		      console.log( i )
+		      $("#letters").append("<div class='snippet' data-id='"+data.data[i].id+"'>"+data.data[i].sletter+"</div>" );
+
+		      }
+
+$(".snippet").click( function() {
+console.log( 'click' );
+console.log( $(this).attr( "data-id")  );
+  $.get( "/api/get-letter", { letter_id:  $(this).attr( "data-id") } )
+  .done(function( data ) {
+		      console.log( "got letter" );
+ $("#letters").html( data.data );
+		      
 });
-    return false;
-}
+
+});
+
+		      });
+		      return false;
+		      }
+
+console.log( 'yo' );
+
 </script>
 
 <form onsubmit="return doSomething();" class="my-form">
@@ -24,3 +46,4 @@ console.log( "Data Loaded: " + data );
     <input type="submit" value="Submit">
 </form>
 form changed
+<div id="letters"></div>
