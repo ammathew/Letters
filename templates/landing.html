@@ -6,6 +6,7 @@
 
 <!-- Latest compiled and minified JavaScript -->
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 
 <script>
   function doSomething() {
@@ -17,19 +18,30 @@
   console.log( "Data Loaded: " + data );
   for ( var i = 0; i< data.data.length; i++ ) {
 		      console.log( i )
-		      $("#letters").append("<div class='snippet' data-id='"+data.data[i].id+"'>"+data.data[i].sletter+"</div>" );
+
+	    var oldStr = data.data[i].sletter
+	    var strLength = search_term.length;
+	    var strBegin = oldStr.search( search_term );
+	    var newStr = [oldStr.slice(0, strBegin), "<span class='highlight'>" , oldStr.slice(strBegin)].join('');
+	    var strEnd = strBegin+strLength+24;
+	    var finalStr = "..." + [newStr.slice(0, strEnd), "</span>" , newStr.slice(strEnd)].join('') + "...";
+
+		      $("#letters").append("<div class='snippet' data-id='"+data.data[i].id+"'>"+i+"."+ finalStr +"</div>" );
 
 		      }
 
-$(".snippet").click( function() {
-console.log( 'click' );
-console.log( $(this).attr( "data-id")  );
-  $.get( "/api/get-letter", { letter_id:  $(this).attr( "data-id") } )
-  .done(function( data ) {
-		      console.log( "got letter" );
- $("#letters").html( data.data );
-		      
-});
+	$(".snippet").click( function() {
+	    console.log( $(this).attr( "data-id")  );
+	    $.get( "/api/get-letter", { letter_id:  $(this).attr( "data-id") } )
+			 .done(function( data ) {
+		console.log( "got letter" );
+
+		var letter = data.data;
+		letter = letter.replace(/\n/g, "<br />");
+		$("#letters" ).html( '<br /><h3>' + finalStr + '</h3><br />' );
+		$("#letters").append( letter );
+		
+	    });
 
 });
 
@@ -40,10 +52,43 @@ console.log( $(this).attr( "data-id")  );
 console.log( 'yo' );
 
 </script>
-
+<body>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- shareholder_letters_banner -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-4278351982375766"
+     data-ad-slot="7500812946"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<h1>Search our extensive database of shareholder letters</h1>
 <form onsubmit="return doSomething();" class="my-form">
   <input type="text" id="formValueId"/>
     <input type="submit" value="Submit">
 </form>
-form changed
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- second_banner -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-4278351982375766"
+     data-ad-slot="2931012544"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
 <div id="letters"></div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-38505691-7', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</body>

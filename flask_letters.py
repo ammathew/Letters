@@ -45,7 +45,7 @@ def get_tasks():
     search_term = request.args.get('search_term', 'Third')
     search_term = str( search_term )
     try:
-        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).limit(10)
+        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).limit(300)
         session.close()
         
         shortenedLetters = []
