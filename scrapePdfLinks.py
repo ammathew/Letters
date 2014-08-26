@@ -83,11 +83,11 @@ def convert_pdf_to_txt( path ):
     unicodeString = unicode( str, "utf-8")
     return unicodeString
 
-def addPdfToDB( pdfStr ):
+def addPdfToDB( pdfStr, pdf_url_id ):
     engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
     Session = sessionmaker(bind=engine)
     session_letters = Session()
-    new_letter = Letters( pdfStr )
+    new_letter = Letters( pdfStr, pdf_url_id )
     session_letters.add(new_letter)
     session_letters.commit()
 
@@ -104,7 +104,7 @@ def startScraping():
         try:
             print pdf_url.pdf_url
             pdfStr = convert_pdf_to_txt( pdf_url.pdf_url )
-            addPdfToDB( pdfStr )
+            addPdfToDB( pdfStr, pdf_url.id )
             pdf_url.scraped = True
             session.add( pdf_url )
             print pdf_url.scraped
