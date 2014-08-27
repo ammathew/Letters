@@ -56,6 +56,8 @@ def addLinksListToDB( links ):
 def aa( fileName ):
     urls = pickle.load( open( fileName, 'rb' ) )
     for url in urls:
+	print 'adding'
+	print url
         links = scrapePdfUrls( url )
         addLinksListToDB( links )
 
@@ -116,11 +118,11 @@ def startScraping():
 #url = "http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp"
 #links = scrapePdfUrls( url )
 #addLinksListToDB( links )
-#print aa( 'urls_page_1.txt' )
+aa( 'urls_page_2.txt' )
 
 #test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
 #pdfStr = convert_pdf_to_txt( test_remote_pdf  )
 
 #addPdfToDB( pdfStr )
 
-startScraping()
+#startScraping()

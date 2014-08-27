@@ -1,0 +1,9 @@
+.snippet {
+color: red;
+cursor: pointer;
+}
+
+.snippet:hover {
+text-decoration: underline;
+
+}

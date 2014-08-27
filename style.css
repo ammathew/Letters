@@ -1,0 +1,13 @@
+body {
+padding: 20px;
+}
+
+.snippet {
+color: blue;
+cursor: pointer;
+}
+
+.snippet:hover {
+text-decoration: underline;
+
+}

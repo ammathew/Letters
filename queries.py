@@ -10,8 +10,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
  
 # how to do a SELECT * (i.e. all)
+
 res = session.query(PdfUrl).all()
 for url in res:
     print "this is url id"
     print url.scraped
- 

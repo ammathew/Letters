@@ -1,0 +1,5 @@
+Options +ExecCGI
+AddHandler fcgid-script .fcgi
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !=/home2/thezeith/public_html/letters/flask_letters.fcgi
+RewriteRule ^(.*)$ flask_letters.fcgi/$1 [QSA,L]
