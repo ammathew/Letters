@@ -21,36 +21,41 @@ from table_def import Letters
 
 def scrapePdfUrls( url ):
     match = re.compile('\.(pdf)')
-    page = requests.get( url )
-    page = BeautifulSoup(page.text)
-    links = []
+    try:
+        page = requests.get( url )
+        page = BeautifulSoup(page.text)
+        links = []
+    
+        # check links
+        for link in page.findAll('a'):
+            try:
+                href = link['href']
+                if re.search(match, href):
+                    link = urlparse.urljoin(url, href)
+                    links.append( link ) 
+            except KeyError:
+                pass
+        return links
 
-    # check links
-    for link in page.findAll('a'):
-        try:
-            href = link['href']
-            if re.search(match, href):
-                link = urlparse.urljoin(url, href)
-                links.append( link ) 
-        except KeyError:
-            pass
-
-    return links
+    except:
+        pass
 
 def addLinksListToDB( links ):
-    engine = create_engine('sqlite:///pdf_urls.db', echo=True)
- 
-    # create a Session
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    addToDB = [] 
-    for item in links:
-        dbItem = PdfUrl( item, False )
-        addToDB.append( dbItem ) 
-
-    session.add_all( addToDB )
-    session.commit()
+    try: 
+        engine = create_engine('sqlite:///pdf_urls.db', echo=True)
         
+        # create a Session
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        addToDB = [] 
+        for item in links:
+            dbItem = PdfUrl( item, False )
+            addToDB.append( dbItem ) 
+        session.add_all( addToDB )
+        session.commit()
+    except:
+        pass
+    
 # take txt file, open, return list
 
 def aa( fileName ):
@@ -100,7 +105,8 @@ def startScraping():
     engine = create_engine('sqlite:///pdf_urls.db', echo=True)
     Session = sessionmaker(bind=engine)
     session = Session()
-    pdfUrls = session.query(PdfUrl).all()
+    #pdfUrls = session.query(PdfUrl).all()
+    pdfUrls = session.query( PdfUrl ).distinct( PdfUrl.pdf_url ).group_by( PdfUrl.pdf_url).filter( PdfUrl.scraped == False )
     
     for pdf_url in pdfUrls:
         try:
@@ -118,11 +124,18 @@ def startScraping():
 #url = "http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp"
 #links = scrapePdfUrls( url )
 #addLinksListToDB( links )
-aa( 'urls_page_2.txt' )
+
+#i = 4;
+#while i<11:
+#    numStr = str( i )
+#    fileStr = 'urls_page_%s.txt'%(numStr)
+#    aa( fileStr )
+#    i = i + 1
 
 #test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
 #pdfStr = convert_pdf_to_txt( test_remote_pdf  )
 
 #addPdfToDB( pdfStr )
 
-#startScraping()
+startScraping()
+
