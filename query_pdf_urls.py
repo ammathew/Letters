@@ -13,7 +13,7 @@ session = Session()
 res = session.query(PdfUrl).all()
 print "this is count"
 for item in res:
-    if item.scraped == True:
+    if item.scraped == False:
         print item.id
 
 #for pdf_url in res:

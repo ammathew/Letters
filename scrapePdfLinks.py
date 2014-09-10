@@ -19,6 +19,9 @@ from cStringIO import StringIO
 import urllib
 from table_def import Letters
 
+imporrt time
+
+
 def scrapePdfUrls( url ):
     match = re.compile('\.(pdf)')
     try:
@@ -125,17 +128,16 @@ def startScraping():
 #links = scrapePdfUrls( url )
 #addLinksListToDB( links )
 
-#i = 4;
-#while i<11:
-#    numStr = str( i )
-#    fileStr = 'urls_page_%s.txt'%(numStr)
-#    aa( fileStr )
-#    i = i + 1
+#i = 5;
+#while i<100:
+ #   numStr = str( i )
+ #   fileStr = 'urls_page_%s.txt'%(numStr)
+ #   aa( fileStr )
+ #   i = i + 1
 
 #test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
 #pdfStr = convert_pdf_to_txt( test_remote_pdf  )
 
 #addPdfToDB( pdfStr )
-
-startScraping()
+#startScraping()
 
