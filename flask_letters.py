@@ -16,8 +16,9 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from table_def import Letters
- 
 
+import requests
+import csv 
 
 engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
 
@@ -45,7 +46,7 @@ def get_tasks():
     search_term = request.args.get('search_term', 'Third')
     search_term = str( search_term )
     try:
-        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).limit(300)
+        aa =  session.query( Letters ).filter(Letters.letter.like("%%%s%%"%(search_term))).distinct( Letters.letter ).limit(1000)
         session.close()
         
         shortenedLetters = []
@@ -61,23 +62,33 @@ def get_tasks():
     except:
         return jsonify({ "blah" : "not found" })
 
+#### DATA VISUALIZATION. TODO: MOVE THIS #######
 
+@app.route('/viz/')
+def visualization():
+    return render_template('viz.html')
 
-@app.route('/api/get-letter', methods = ['GET'])
+@app.route('/api/get-timeseries', methods = ['GET'])
 @nocache
-def get_letter():
-    letter_id = request.args.get('letter_id', 100 )
-    try:
-        Session = sessionmaker(bind=engine)
-        session = Session()
+def get_timeseries():
+   url = 'http://finance.google.co.uk/finance/historical?q=LON:VOD&startdate=Oct+1,2008&enddate=Oct+9,2008&output=csv'
+   res = requests.get(url)
+   prices_csv = res.text.encode('utf-8')
 
-        aa =  session.query( Letters ).get( letter_id )
-        session.close()
-        
-        return jsonify({ "data" : aa.letter })
-    except:
-        return jsonify({ "blah" : "error" })
-  
+   file = open("temp.csv", "w")
+   file.write( prices_csv )
+   file.close()
+
+   file = open("temp.csv", "r")
+   
+   prices = []
+   reader = csv.reader( file, delimiter=',')
+   for row in reader:
+       prices.append( row[4] )
+
+   del prices[0]
+
+   return jsonify({"data": prices })
 
 if __name__ == '__main__':
     app.run(debug=True)
