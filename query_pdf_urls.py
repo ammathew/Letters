@@ -10,10 +10,12 @@ Session = sessionmaker(bind=engine)
 session = Session()
  
 # how to do a SELECT * (i.e. all)
-res = session.query(PdfUrl).count()
+res = session.query(PdfUrl).all()
 print "this is count"
-print res
+for item in res:
+    if item.scraped == False:
+        print item.id
+
 #for pdf_url in res:
 #    print pdf_url.pdf_url
 #    print pdf_url.scraped
- 

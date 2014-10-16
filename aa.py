@@ -1,6 +1,8 @@
-from BeautifulSoup import BeautifulSoup, SoupStrainer
+#from BeautifulSoup import BeautifulSoup, SoupStrainer
 import requests
 from xgoogle.search import GoogleSearch, SearchError
+from xgoogle.googlesets import GoogleSets, LARGE_SET, SMALL_SET
+
 import pickle
 import re
 import datetime
@@ -8,13 +10,25 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from table_def import Letters
 import urllib
-import scraperwiki
+#import scraperwiki
 import pdfminer
 
 
 pdf_url = 'http://www.sec.gov/divisions/investment/13f/13flist2013q4.pdf'
 
 searchTerms = [ 'shareholder letter', 'letter to shareholders' ]
+
+
+def getUrls2( page_num ):
+   gs = GoogleSearch('shareholder letter')
+   gs.results_per_page = 50
+   gs.page = page_num
+   results = gs.get_results()
+   for item in results:
+      print item.url.encode("utf8")
+   
+
+
 
 def getUrls ( searchTerm ):
    links = []
@@ -58,15 +72,22 @@ def addToDb( texts ):
   # session.commit()   
    
    
-             #links = getUrls( 'shareholder letters' )
-#f = open('output.txt', 'r')
-#links = pickle.load(f)
+def getSearchResultsByPageNum( search_term, start_num_end_num ):
+   num = start_num
+   end = end_num
+   while ( num < end ):
+      links = getUrls( 'shareholder letters', start )
+      num = num + 1
+   
+   #f = open('output.txt', 'r')
+   #links = pickle.load(f)
+
 #print links
 #texts = checkWords( links )
 #addToDb( texts )
 
-print "HELLO"
-path = '13flist2013q4.pdf'
+#print "HELLO"
+#path = '13flist2013q4.pdf'
 
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
@@ -98,8 +119,9 @@ def convert_pdf_to_txt(path):
     retstr.close()
     return str
 
-test_url = 'http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp'
-test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
+#test_url = 'http://www.thirdavenuecapitalplc.com/ucits/shareholder-letters.asp'
+#test_remote_pdf = 'http://www.thirdavenuecapitalplc.com/ucits/docs/shareholderletters/Q4%202013%20UCITS%20Letters.pdf'
 
-convert_pdf_to_txt(test_remote_pdf)
+#convert_pdf_to_txt(test_remote_pdf)
 
+getUrls2( 11 )

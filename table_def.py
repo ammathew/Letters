@@ -14,12 +14,14 @@ class Letters(Base):
  
     id = Column(Integer, primary_key=True)
     letter = Column(TEXT)  
+    url_id = Column(Integer)
  
     #----------------------------------------------------------------------
-    def __init__(self, letter):
+    def __init__(self, letter, url_id):
         """"""
         self.letter = letter    
- 
+        self.url_id = url_id
+
 # create tables
 
 Base.metadata.create_all(engine)
