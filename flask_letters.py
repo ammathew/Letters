@@ -20,7 +20,18 @@ from table_def import Letters
 import requests
 import csv 
 
+import base64
+import json
+import httplib
+import urllib
+
+from application_only_auth import Client
+
+import pickle
+
 engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
+
+from analyze_sentiment import *
 
 def nocache(view):
     @wraps(view)
@@ -64,14 +75,31 @@ def get_tasks():
 
 #### DATA VISUALIZATION. TODO: MOVE THIS #######
 
+BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAI0xWwAAAAAAh%2BD1hYDRl4VPTQbpDgf68WAn2Ao%3DXf6RD1CSilQbCQufOD0Cn3NsBgfRHcBkMgA0Kdr4ClN29Jfrge"
+
 @app.route('/viz/')
 def visualization():
-    return render_template('viz.html')
+    res = searchTwitterPosts()
+ #   f = open( 'sentimentClassifier', 'r' )
+ #   aa = pickle.load( f )
+ #   f.close()
+  #  res = 
+    res = json.loads( res )
+    res = res["statuses"]
+    classifier = openClassifier()
+    tweetSentimentTimeseries = []
+    for item in res:
+        aa = {}
+        aa["pos"] = getRating( item["text"], classifier );
+        aa["created_at"] = item["created_at"]
+        tweetSentimentTimeseries.append( aa )
+    
+    return render_template('viz.html', res=tweetSentimentTimeseries)
 
 @app.route('/api/get-timeseries', methods = ['GET'])
 @nocache
 def get_timeseries():
-   url = 'http://finance.google.co.uk/finance/historical?q=LON:VOD&startdate=Oct+1,2008&enddate=Oct+9,2008&output=csv'
+   url = 'http://finance.google.co.uk/finance/historical?q=AAPL&startdate=Oct+1,2012&enddate=Oct+9,2013&output=csv'
    res = requests.get(url)
    prices_csv = res.text.encode('utf-8')
 
@@ -89,6 +117,21 @@ def get_timeseries():
    del prices[0]
 
    return jsonify({"data": prices })
+
+def searchTwitterPosts():
+    url='https://api.twitter.com/1.1/search/tweets.json?q=VodaPhone&count=100'
+  
+    CONSUMER_KEY = '5LdbdnyemT8c87Fc5EVFv9VbG'
+    CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
+
+    client = Client(CONSUMER_KEY, CONSUMER_SECRET)
+
+    # Pretty print of tweet payload
+    tweet = client.request( url )
+        
+    # Show rate limit status for this application
+    status = client.rate_limit_status()
+    return json.dumps(tweet, sort_keys=True, indent=4, separators=(',', ':'))
 
 if __name__ == '__main__':
     app.run(debug=True)

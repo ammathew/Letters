@@ -1,0 +1,59 @@
+
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+YO
+<script src="{{ url_for('static', filename='js/viz.js') }}"></script>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='rickshaw.min.js') }}"></script>
+<script src="{{ url_for('static', filename='rickshaw.min.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+<!doctype html> 
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<div id="chart"></div> 
+ 
+<script> 
+ 
+/*
+
+$.get( "http://www.shareholderletters.net/api/get-timeseries", function( data ) {
+
+arr = [];
+for( i=0; i<data.data.length; i++ ) {
+    obj ={};
+    obj['x'] = i;
+    obj['y'] = parseInt( data.data[i] );
+    arr.push( obj );
+}
+
+console.log( arr );
+
+var graph = new Rickshaw.Graph( {
+    element: document.querySelector("#chart"), 
+    width: 300, 
+    height: 200, 
+    series: [{
+        color: 'steelblue',
+        data: arr
+    }]
+});
+ 
+graph.render();
+
+});
+
+*/
+ 
+</script> 
+
+<div ng-app="myServiceModule">
+<div id="simple" ng-controller="MyController">
+  <p>Let's try this simple notify service, injected into the controller...</p>
+  <input  ng-model="companySearch" >
+  <button ng-click="searchTwitter( companySearch)">SEARCH</button>
+  <p>(you have to click 3 times to see an alert)</p>
+<p> REQUEST RESPONSE!!! </p>
+{{ res }}
+
+</div>
+</div>
