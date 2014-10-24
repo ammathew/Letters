@@ -32,6 +32,7 @@ import pickle
 engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
 
 from analyze_sentiment import *
+import traceback
 
 def nocache(view):
     @wraps(view)
@@ -44,7 +45,7 @@ def nocache(view):
         return response
     return update_wrapper(no_cache, view)
 
-@app.route('/')
+@app.route('/database')
 def hello_world():
     return render_template('landing.html')
 
@@ -77,25 +78,26 @@ def get_tasks():
 
 BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAI0xWwAAAAAAh%2BD1hYDRl4VPTQbpDgf68WAn2Ao%3DXf6RD1CSilQbCQufOD0Cn3NsBgfRHcBkMgA0Kdr4ClN29Jfrge"
 
-@app.route('/viz/')
+CLASSIFIER = openClassifier()
+
+@app.route('/')
 def visualization():
-    res = searchTwitterPosts()
- #   f = open( 'sentimentClassifier', 'r' )
- #   aa = pickle.load( f )
- #   f.close()
-  #  res = 
-    res = json.loads( res )
+    return render_template( 'viz.html' )
+
+def getSentTimeseries( rawTwitterData ):
+    res = json.loads( rawTwitterData )
     res = res["statuses"]
-    classifier = openClassifier()
     tweetSentimentTimeseries = []
     for item in res:
         aa = {}
-        aa["pos"] = getRating( item["text"], classifier );
+        aa["pos"] = getRating( item["text"], CLASSIFIER );
         aa["created_at"] = item["created_at"]
+        aa["text"] = item["text"]
         tweetSentimentTimeseries.append( aa )
-    
-    return render_template('viz.html', res=tweetSentimentTimeseries)
+    tweetSentimentTimeseries = json.dumps( tweetSentimentTimeseries )
+    return tweetSentimentTimeseries
 
+    
 @app.route('/api/get-timeseries', methods = ['GET'])
 @nocache
 def get_timeseries():
@@ -118,8 +120,16 @@ def get_timeseries():
 
    return jsonify({"data": prices })
 
-def searchTwitterPosts():
-    url='https://api.twitter.com/1.1/search/tweets.json?q=VodaPhone&count=100'
+@app.route('/api/company-info', methods = ['GET'])
+def searchCompanyName():
+    search_term = request.args.get( 'search_term' )
+    search_term = str( search_term )
+    posts = searchTwitterPosts( search_term )  
+    sentiment = getSentTimeseries( posts )
+    return sentiment
+
+def searchTwitterPosts( companyName ):
+    url='https://api.twitter.com/1.1/search/tweets.json?q=%s&count=100'%( companyName )
   
     CONSUMER_KEY = '5LdbdnyemT8c87Fc5EVFv9VbG'
     CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
@@ -132,6 +142,14 @@ def searchTwitterPosts():
     # Show rate limit status for this application
     status = client.rate_limit_status()
     return json.dumps(tweet, sort_keys=True, indent=4, separators=(',', ':'))
+  #  return tweet
+
+@app.errorhandler(500)
+def internal_error(exception):
+    app.logger.exception(exception)
+    aa = str( type( exception ) )
+    aa = traceback.format_exc()
+    return aa
 
 if __name__ == '__main__':
     app.run(debug=True)

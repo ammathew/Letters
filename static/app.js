@@ -1,42 +1,79 @@
+aa = angular.module('myServiceModule', ['ui.bootstrap']);
+aa.config(['$interpolateProvider', function ($interpolateProvider) {
+    $interpolateProvider.startSymbol('[[');
+    $interpolateProvider.endSymbol(']]');
+  }]);
 
-console.log( 'yo' );
-aa = angular.module('myServiceModule', []);
-aa.controller('MyController', ['$scope', 'searchTwitterFactory', 'authTwitterFactory', function ($scope, searchTwitterFactory, authTwitterFactory, $http ) {
-//    authTwitterFactory.getDrivers().success( function( data ) {
-	console.log( 'afss' );
-    });
+aa.controller('DashboardCtrl', ['$scope', 'searchTwitterFactory', function ($scope, searchTwitterFactory, $http ) {
+    $scope.searchTwitter = function( companyName ) {
+	console.log( $scope.companyName )
+	$scope.start = '';
+	$scope.end = '';
+	searchTwitterFactory( companyName, $scope.start, $scope.end ).success( function( data){
+	    $scope.timeAndSent = data;
+	})
+    }
+    }]);
   
-
-}]);
-
 aa.factory('searchTwitterFactory', function($http) {
-    var ergastAPI = {};
-    ergastAPI.getDrivers = function() {
-      return $http({
-	  method: 'jsonp',
-        url: 'https://api.twitter.com/1.1/search/tweets.json'
-      });
+    return function( companyName, start, end ) {
+	console.log( start );
+	return $http({
+	    method: 'GET',
+            url: '/api/company-info',
+	    params : { 
+		search_term : companyName,
+		start_time : start,
+		end_time : end
+	    }
+	});
     }
-
-    return ergastAPI;
 });
 
+aa.directive( 'sentchart', function() {
+    return {
+	restrict: 'E',
+	link: function( scope, elem, attr ) {
+	    scope.$watch( 'timeAndSent', function(newValue, attr) {
+		console.log( 'yo!' );
+		console.log( elem );
+		if ( newValue ) {
+		    data = newValue;
+		    arr = [];
+		    for( i=0; i<data.length; i++ ) {
+			obj ={};
+			obj['x'] = i;
+			obj['y'] = parseInt( data[i].pos * 100 );
+			arr.push( obj );
+		    }
 
-aa.factory('authTwitterFactory', function($http) {
-    var ergastAPI = {};
-    ergastAPI.getDrivers = function() {
-	var aa = '0H68Giqh3XaVPQe0x30IiA:KlV894f9zkuXWdh6pasw9he6PwpcgQYc3XFrLkNJ7t0';
-	aa = btoa( aa );
-      return $http({
-	  method: 'POSTfssd',
-          url: 'https://api.twitter.com/oauth2/token',
-	  data: { grant_type : 'client_credentials' },
-	  headers: { 
-	      'Authorizaton': 'Basic ' + aa,
-	      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-	  }
-      });
+		    console.log( arr );
+
+		    var graph = new Rickshaw.Graph( {
+			element: document.querySelector("#chart"), 
+			width: 300, 
+			height: 200, 
+			series: [{
+			    color: 'steelblue',
+			    data: arr
+			}]
+		    });		
+		    graph.render();
+		}
+	    });
+	}	
     }
+})
 
-    return ergastAPI;
-});
+
+aa.directive( 'reservation', function() {
+    return {
+	restrict: 'A',
+	link: function( scope, elem, attr ) {
+	    elem.daterangepicker(null, function(start, end, label) {
+                scope.start = start.toISOString();
+		scope.end = end.toISOString();
+            });
+	}	
+    }
+})
