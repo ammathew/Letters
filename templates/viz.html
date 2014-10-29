@@ -1,59 +1,45 @@
-
+<script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.3/jquery.mobile.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
-YO
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"></script>
 <script src="{{ url_for('static', filename='js/viz.js') }}"></script>
 <script src="{{ url_for('static', filename='d3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='rickshaw.min.js') }}"></script>
 <script src="{{ url_for('static', filename='rickshaw.min.js') }}"></script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ui-bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nvd3/nv.d3.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap-daterangepicker/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nvd3/bower_components/angularjs-nvd3-directives/dist/angularjs-nvd3-directives.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap-daterangepicker/daterangepicker-bs3.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/nvd3/nv.d3.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/nvd3/nv.d3.css') }}" />
 
 <!doctype html> 
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<div id="chart"></div> 
- 
-<script> 
- 
-/*
-
-$.get( "http://www.shareholderletters.net/api/get-timeseries", function( data ) {
-
-arr = [];
-for( i=0; i<data.data.length; i++ ) {
-    obj ={};
-    obj['x'] = i;
-    obj['y'] = parseInt( data.data[i] );
-    arr.push( obj );
-}
-
-console.log( arr );
-
-var graph = new Rickshaw.Graph( {
-    element: document.querySelector("#chart"), 
-    width: 300, 
-    height: 200, 
-    series: [{
-        color: 'steelblue',
-        data: arr
-    }]
-});
- 
-graph.render();
-
-});
-
-*/
- 
-</script> 
 
 <div ng-app="myServiceModule">
-<div id="simple" ng-controller="MyController">
-  <p>Let's try this simple notify service, injected into the controller...</p>
-  <input  ng-model="companySearch" >
-  <button ng-click="searchTwitter( companySearch)">SEARCH</button>
-  <p>(you have to click 3 times to see an alert)</p>
-<p> REQUEST RESPONSE!!! </p>
-{{ res }}
+<div id="simple" ng-controller="DashboardCtrl">
+  <input ng-model="companyName" >
+  <button ng-click="searchTwitter( companyName )">SEARCH</button>
+  <sentchart id="chart"> click here</sentchart> 
+  
+{{ exampleData }}
 
+<nvd3-pie-chart
+    	data="pieChartData"
+        id="exampleId"
+        width="550"
+        height="350"
+        x="xFunction()"
+        y="yFunction()"
+        showLabels="true">
+        <svg></svg>
+    </nvd3-pie-chart>
 </div>
-</div>
+
+
+
