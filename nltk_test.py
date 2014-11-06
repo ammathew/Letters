@@ -2,7 +2,8 @@ import nltk.classify.util
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
  
-import pickle 
+import cPickle 
+import marshal
 
 def word_feats(words):
     return dict([(word, True) for word in words])
@@ -21,8 +22,8 @@ testfeats = negfeats[negcutoff:] + posfeats[poscutoff:]
 print 'train on %d instances, test on %d instances' % (len(trainfeats), len(testfeats))
  
 classifier = NaiveBayesClassifier.train(trainfeats)
-f = open( 'sentimentClassifier', 'w' )
-pickle.dump( classifier, f )
+f = open( 'sentimentClassifierCPickle', 'wb' )
+cPickle.dump( classifier, f, 1 )
 f.close()
 
 print testfeats

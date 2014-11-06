@@ -34,6 +34,9 @@ engine = create_engine('sqlite:///shareholder_letters.db', echo=True)
 from analyze_sentiment import *
 import traceback
 
+import urllib
+
+
 def nocache(view):
     @wraps(view)
     def no_cache(*args, **kwargs):
@@ -82,7 +85,7 @@ CLASSIFIER = openClassifier()
 
 @app.route('/')
 def visualization():
-    return render_template( 'viz.html' )
+    return make_response( render_template( 'viz.html' ) )
 
 def getSentTimeseries( rawTwitterData ):
     res = json.loads( rawTwitterData )
@@ -96,6 +99,35 @@ def getSentTimeseries( rawTwitterData ):
         tweetSentimentTimeseries.append( aa )
     tweetSentimentTimeseries = json.dumps( tweetSentimentTimeseries )
     return tweetSentimentTimeseries
+
+def getPieChartData( rawTwitterData ):
+    res = json.loads( rawTwitterData )
+    res = res["statuses"]
+    aa = {}
+    aa["pos"] = 0
+    aa["neg"] = 0
+    for item in res:
+        sent = getRating( item["text"], CLASSIFIER )
+        if sent > .5:
+            aa["pos"] += 1
+        else:
+            aa["neg"] +=1
+    tweetSentimentTimeseries = []
+    for item in res:
+        cc = {}
+        cc["created_at"] = item["created_at"]
+        cc["text"] = item["text"]
+        cc["location"] = item["user"]["location"]
+        cc["place"] = item["place"]
+        cc["pos"] = getRating( item["text"], CLASSIFIER )
+        tweetSentimentTimeseries.append( cc )
+        
+    bb = []
+    bb.append( { "key": "pos", "y" : aa["pos"] } )
+    bb.append( { "key": "neg", "y" : aa["neg"] } ) 
+    bb.append( tweetSentimentTimeseries )
+    pieChartData = json.dumps( bb )
+    return pieChartData
 
     
 @app.route('/api/get-timeseries', methods = ['GET'])
@@ -122,15 +154,24 @@ def get_timeseries():
 
 @app.route('/api/company-info', methods = ['GET'])
 def searchCompanyName():
-    search_term = request.args.get( 'search_term' )
-    search_term = str( search_term )
-    posts = searchTwitterPosts( search_term )  
-    sentiment = getSentTimeseries( posts )
+    search_term = request.args.get('search_term')
+    search_term = str( search_term+ " -RT" )
+    search_term = urllib.quote_plus( search_term )
+    geocode = request.args.get('geocode')
+    geocode = str( geocode )
+    geocode = urllib.quote_plus( geocode )
+    
+    posts = searchTwitterPosts( search_term, geocode )  
+
+   # sentiment = getSentTimeseries( posts )
+    sentiment = getPieChartData( posts )
     return sentiment
 
-def searchTwitterPosts( companyName ):
-    url='https://api.twitter.com/1.1/search/tweets.json?q=%s&count=100'%( companyName )
-  
+def searchTwitterPosts( companyName, geocode  ):
+    url='https://api.twitter.com/1.1/search/tweets.json?q=%s&count=100&geocode=%s'%( companyName, geocode )
+
+    #raise Exception( url );
+
     CONSUMER_KEY = '5LdbdnyemT8c87Fc5EVFv9VbG'
     CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
 
@@ -138,7 +179,7 @@ def searchTwitterPosts( companyName ):
 
     # Pretty print of tweet payload
     tweet = client.request( url )
-        
+
     # Show rate limit status for this application
     status = client.rate_limit_status()
     return json.dumps(tweet, sort_keys=True, indent=4, separators=(',', ':'))

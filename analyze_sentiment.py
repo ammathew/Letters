@@ -1,8 +1,8 @@
-import pickle
+import cPickle as pickle
 import nltk
 
 def openClassifier():
-    f = open( 'sentimentClassifier', 'r' )
+    f = open( 'sentimentClassifierCPickle', 'rb' )
     classifier = pickle.load( f )
     f.close()
     return classifier
