@@ -38,77 +38,24 @@ from flask import Flask,session, request, flash, url_for, redirect, render_templ
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.login import login_user , logout_user , current_user , login_required
-from werkzeug.security import generate_password_hash, check_password_hash
+#from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__)
-app.config.from_pyfile('config.py')
-db = SQLAlchemy(app)
+from app import app, db, login_manager
+from app.models import User, Todo, TwitterAuth
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-#from app.models import User, Todo
-
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column('user_id',db.Integer , primary_key=True)
-    username = db.Column('username', db.String(20), unique=True , index=True)
-    password = db.Column('password' , db.String(250))
-    email = db.Column('email',db.String(50),unique=True , index=True)
-    registered_on = db.Column('registered_on' , db.DateTime)
-    todos = db.relationship('Todo' , backref='user',lazy='dynamic')
-
-    def __init__(self , username ,password , email):
-        self.username = username
-        self.set_password(password)
-        self.email = email
-        self.registered_on = datetime.utcnow()
-
-    def set_password(self , password):
-        self.password = generate_password_hash(password)
-
-    def check_password(self , password):
-        return check_password_hash(self.password , password)
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return unicode(self.id)
-
-    def __repr__(self):
-        return '<User %r>' % (self.username)
-
-class Todo(db.Model):
-    __tablename__ = 'todos'
-    id = db.Column('todo_id', db.Integer, primary_key=True)
-    title = db.Column(db.String(60))
-    text = db.Column(db.String)
-    done = db.Column(db.Boolean)
-    pub_date = db.Column(db.DateTime)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
-
-    def __init__(self, title, text):
-        self.title = title
-        self.text = text
-        self.done = False
-        self.pub_date = datetime.utcnow()
+import json
 
 
 @app.route('/')
-@login_required
 def index():
-    return render_template('index.html',
-        todos=Todo.query.filter_by(user_id = g.user.id).order_by(Todo.pub_date.desc()).all()
-    )
+    return render_template('marketing.html')
 
+#@app.route('/')
+#@login_required
+#def index():
+#    return render_template('index.html',
+#        todos=Todo.query.filter_by(user_id = g.user.id).order_by(Todo.pub_date.desc()).all()
+#    )
 
 @app.route('/new', methods=['GET', 'POST'])
 @login_required
@@ -143,21 +90,19 @@ def show_or_update(todo_id):
     return redirect(url_for('show_or_update',todo_id=todo_id))
 
 
-@app.route('/register' , methods=['GET','POST'])
+@app.route('/api/register' , methods=['GET','POST'])
 def register():
-    if request.method == 'GET':
-        return render_template('register.html')
-    user = User(request.form['username'] , request.form['password'],request.form['email'])
+    username = request.form['username']
+    password = request.form['password']
+    email = request.form['email']
+
+    user = User( username, password, email )
     db.session.add(user)
     db.session.commit()
-    flash('User successfully registered')
-    return redirect(url_for('login'))
+    return '{ "status" : 200 }'
 
-@app.route('/login',methods=['GET','POST'])
-def login():
-    if request.method == 'GET':
-        return render_template('login.html')
-    
+@app.route('/api/login',methods=['GET','POST'])
+def login():    
     username = request.form['username']
     password = request.form['password']
     remember_me = False
@@ -171,13 +116,13 @@ def login():
         flash('Password is invalid','error')
         return redirect(url_for('login'))
     login_user(registered_user, remember = remember_me)
-    flash('Logged in successfully')
-    return redirect(request.args.get('next') or url_for('index'))
+    #   flash('Logged in successfully')
+    return '{ "status" : 200 }'
 
-@app.route('/logout')
+@app.route('/api/logout')
 def logout():
     logout_user()
-    return redirect(url_for('index')) 
+    return '{ "status" : 200 }'
 
 @login_manager.user_loader
 def load_user(id):
@@ -198,13 +143,10 @@ def nocache(view):
         return response
     return update_wrapper(no_cache, view)
 
-@app.route('/database')
-def hello_world():
-    return render_template('landing.html')
 
 #### DATA VISUALIZATION. TODO: MOVE THIS #######
 
-BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAI0xWwAAAAAAh%2BD1hYDRl4VPTQbpDgf68WAn2Ao%3DXf6RD1CSilQbCQufOD0Cn3NsBgfRHcBkMgA0Kdr4ClN29Jfrge"
+#BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAI0xWwAAAAAAh%2BD1hYDRl4VPTQbpDgf68WAn2Ao%3DXf6RD1CSilQbCQufOD0Cn3NsBgfRHcBkMgA0Kdr4ClN29Jfrge"
 
 #CLASSIFIER = openClassifier()
 
@@ -256,52 +198,46 @@ BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAI0xWwAAAAAAh%2BD1hYDRl4VPTQbpDgf68WAn2Ao%3D
 #    return pieChartData
 
 
-@app.route('/api/company-info', methods = ['GET'])
-def searchCompanyName():
-    search_term = request.args.get('search_term')
-    search_term = str( search_term+ " -RT" )
-    search_term = urllib.quote_plus( search_term )
-    geocode = request.args.get('geocode')
-    geocode = str( geocode )
-    geocode = urllib.quote_plus( geocode )
+#@app.route('/api/company-info', methods = ['GET'])
+#def searchCompanyName():
+#    search_term = request.args.get('search_term')
+#    search_term = str( search_term+ " -RT" )
+#    search_term = urllib.quote_plus( search_term )
+#    geocode = request.args.get('geocode')
+#    geocode = str( geocode )
+#    geocode = urllib.quote_plus( geocode )
     
-    posts = searchTwitterPosts( search_term, geocode )  
+#    posts = searchTwitterPosts( search_term, geocode )  
 
    # sentiment = getSentTimeseries( posts )
-    sentiment = getPieChartData( posts )
-    return sentiment
+ #   sentiment = getPieChartData( posts )
+ #   return sentiment
 
-def searchTwitterPosts( companyName, geocode  ):
-    url='https://api.twitter.com/1.1/search/tweets.json?q=%s&count=100&geocode=%s'%( companyName, geocode )
+#def searchTwitterPosts( companyName, geocode  ):
+#    url='https://api.twitter.com/1.1/search/tweets.json?q=%s&count=100&geocode=%s'%( companyName, geocode )
 
-    #raise Exception( url );
+#    #raise Exception( url );
 
-    CONSUMER_KEY = '5LdbdnyemT8c87Fc5EVFv9VbG'
-    CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
-
-    client = Client(CONSUMER_KEY, CONSUMER_SECRET)
+#    client = Client(CONSUMER_KEY, CONSUMER_SECRET)
 
     # Pretty print of tweet payload
-    tweet = client.request( url )
+#    tweet = client.request( url )
 
     # Show rate limit status for this application
-    status = client.rate_limit_status()
-    return json.dumps(tweet, sort_keys=True, indent=4, separators=(',', ':'))
-  #  return tweet
+#    status = client.rate_limit_status()
+#    return json.dumps(tweet, sort_keys=True, indent=4, separators=(',', ':'))
+#    return tweet
 
 
 CONSUMER_TOKEN = '5LdbdnyemT8c87Fc5EVFv9VbG'
 CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
 from flask import request
 import tweepy
- 
-#config
-
 CALLBACK_URL = 'http://www.thezeitheist.com/verify'
-session = dict()
-db = dict() #you can save these values to a database
+auth_twitter_session = dict()
+db_twitter = dict() #you can save these values to a database
  
-@app.route("/authtwitter")
+@app.route("/api/authtwitter")
 def send_token():
     auth = tweepy.OAuthHandler(CONSUMER_TOKEN, 
                                CONSUMER_SECRET, 
@@ -310,7 +246,7 @@ def send_token():
     try: 
 		#get the request tokens
         redirect_url= auth.get_authorization_url()
-        session['request_token']= (auth.request_token.key,
+        auth_twitter_session['request_token']= (auth.request_token.key,
                                    auth.request_token.secret)
     except tweepy.TweepError:
         print 'Error! Failed to get request token'
@@ -320,37 +256,33 @@ def send_token():
  
 @app.route("/verify")
 def get_verification():
+    verifier= request.args['oauth_verifier']
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    #  raise Exception(  auth_twitter_session['request_token'] )
+    token = auth_twitter_session['request_token']
+    del auth_twitter_session['request_token']
+    auth.set_request_token(token[0], token[1])
+    try:
+        auth.get_access_token(verifier)
+    except tweepy.TweepError:
+        print 'Error! Failed to get access token.'
+        
+    twitter_auth = TwitterAuth( auth.access_token.key, auth.access_token.secret, g.user.id )
+    db.session.add( twitter_auth )
+    db.session.commit()
+    
+    return flask.render_template('index.html')
  
-	#get the verifier key from the request url
-	verifier= request.args['oauth_verifier']
- 
-	auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
-	token = session['request_token']
-	del session['request_token']
- 
-	auth.set_request_token(token[0], token[1])
- 
-	try:
-		    auth.get_access_token(verifier)
-	except tweepy.TweepError:
-		    print 'Error! Failed to get access token.'
- 
-	#now you have access!
-	api = tweepy.API(auth)
-
-	#store in a db
-	db['api']=api
-	db['access_token_key']=auth.access_token.key
-	db['access_token_secret']=auth.access_token.secret
-	return flask.redirect(flask.url_for('start'))
- 
-@app.route("/start")
+@app.route("/api/twitterPosts")
 def start():
-	#auth done, app logic can begin
-	api = db['api']
- 
-	#example, print your latest status posts
-	return flask.render_template('afterauth.html', tweets=api.user_timeline())
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
+    auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
+    api = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    tweets=api.user_timeline();
+    data = json.dumps( tweets );
+
+    return data
 
 
 @app.errorhandler(500)

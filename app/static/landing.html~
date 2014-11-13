@@ -1,0 +1,4 @@
+ADDRESS
+<input ng-model="address" >
+<input ng-model="radius">
+<button ng-click="getGeocode( address, geoData )">LOOKUP ADDRESS</button>  

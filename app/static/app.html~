@@ -1,0 +1,32 @@
+<div class="col-md-4">
+  SEARCH TERM
+  <input ng-model="companyName" >
+
+  LOCATION
+  <input ng-model="address" >
+
+  RADIUS
+  <input ng-model="radius" >
+  <button ng-click="searchTwitter( companyName, geoData )">SEARCH FOR COMPANY [[ geoData ]]</button>
+
+  [[ geocode[0].geometry.location ]]
+</div>
+
+
+<div class="col-md-8">
+  <div ng-repeat="post in posts">
+    [[ post["text"] ]]
+  </div>
+
+  <nvd3-pie-chart
+     data="pieChartData"
+     id="exampleId"
+     width="350"
+     height="350"
+     x="xFunction()"
+     y="yFunction()"
+     showLabels="true">
+    <svg></svg>
+  </nvd3-pie-chart>
+</div>
+</div>
