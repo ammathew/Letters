@@ -20,7 +20,43 @@ aa.config(['$interpolateProvider', '$routeProvider', '$locationProvider', functi
     // was not able to get html5Mode to work. maybe look into History.js .. 
 }]);
 
-aa.controller('DashboardCtrl', ['$scope', 'searchTwitterFactory', '$http', '$location', '$rootScope', '$window',function ($scope, searchTwitterFactory, $http, $location, $rootScope, $window ) {
+aa.controller('DashboardCtrl', ['$scope', 'searchTwitterFactory', '$http', '$location', '$rootScope', '$window', 'twitter', function ($scope, searchTwitterFactory, $http, $location, $rootScope, $window, twitter ) {
+    
+    $scope.showResponseInput = false;
+    
+    $scope.favoritePost = function( id_str ) {
+	options = {   method: 'POST',
+		      url: "/api/twitter/favorite/create",
+		      data: { id : id_str }
+		  }
+	twitter( options );
+    }
+
+    $scope.replyToPost = function( tweet, response ) {
+	
+
+	options = {   method: 'POST',
+		      url: "/api/twitter/update_status",
+		      data: { 
+			  status: '@' + tweet.user.screen_name + ' ' + response,
+			  in_reply_to_status_id : tweet.id_str 
+		      }
+		  }
+	twitter( options );
+
+
+    }
+
+    $scope.getConvos = function() {
+	options = {   method: 'POST',
+		      url: "/api/twitter/convos"
+		  }
+	return twitter( options );
+    }
+
+    $scope.getConvos().success( function( data ) {
+	$scope.conversations = data
+    });
 
     $scope.getTweetEnts = function ( tweetText ) {
 	$scope.getEntities( tweetText ).success( function( data ) {
@@ -68,14 +104,16 @@ aa.controller('DashboardCtrl', ['$scope', 'searchTwitterFactory', '$http', '$loc
 	$('html').mouseup(function (e){
 	    var text = "";
 	    if (window.getSelection && window.getSelection().type == "Range" ) {
-		$("mark").contents().unwrap();
-		$("mark").remove();
-		$scope.selectedText = window.getSelection().toString();
-		var selection = window.getSelection();
-		var range = selection.getRangeAt(0);
-		var cssclass = $(selection.anchorNode.parentNode).attr("class");
-		var newNode = document.createElement("mark");
-		range.surroundContents(newNode);
+		$scope.$apply( function() {
+		    $("mark").contents().unwrap();
+		    $("mark").remove();
+		    $scope.selectedText = window.getSelection().toString();
+		    var selection = window.getSelection();
+		    var range = selection.getRangeAt(0);
+		    var cssclass = $(selection.anchorNode.parentNode).attr("class");
+		    var newNode = document.createElement("mark");
+		    range.surroundContents(newNode);
+		})
 
 	    } else if (document.selection && document.selection.type != "Control") {
 		$scope.searchText = document.selection.createRange().text;
@@ -85,12 +123,15 @@ aa.controller('DashboardCtrl', ['$scope', 'searchTwitterFactory', '$http', '$loc
 
     $scope.$watch( 'selectedText', function( newValue ) {
 	$( "mark" ).click( function() {
-	    $scope.searchTwitter( newValue ).success( function( data ){
-		$scope.tweetsWithSearchTerm = data.statuses;
-	    }); 
+	    $scope.$apply( function(){
+		$scope.searchTwitter( newValue ).success( function( data ){
+		    $scope.tweetsWithSearchTerm = data.statuses;
+		}); 
+	    })
 	})
 	
     })
+
    
     $scope.getHighlightedText();
 
@@ -236,13 +277,28 @@ aa.controller('AuthCtrl', ['$scope', '$http', '$location',  function ($scope, $h
 }])
 
 
-aa.directive('blah', function() {
-    return {
-	scope: '=',
-        restrict: 'E',  
-        templateUrl: "tweet.html"
-    };
+aa.service( 'twitter', function( $http ){
+    return function( id_str ) {
+	console.log( options );
+	return $http( options )
+    }
 });
+
+
+aa.directive( 'mark', function() {
+    return {
+	restrict: 'E',
+	link: function( scope, elem, attrs ) {
+	    console.log( 'mark...yo' );
+	    elem.bind( "click", function() {
+		scope.searchTwitter( newValue ).success( function( data ){
+		    scope.tweetsWithSearchTerm = data.statuses;
+		}); 
+	    });
+	}
+    }
+});
+
 
 aa.directive( 'reservation', function() {
     return {

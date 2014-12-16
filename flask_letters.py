@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 
@@ -40,10 +41,12 @@ from flask.ext.login import LoginManager
 from flask.ext.login import login_user , logout_user , current_user , login_required
 #from werkzeug.security import generate_password_hash, check_password_hash
 
-from app import app, db, login_manager
+from app import app, db, login_manager, BASE_URL
 from app.models import User, Todo, TwitterAuth
 
 import json
+
+import nltk
 
 
 @app.route('/')
@@ -229,15 +232,18 @@ def nocache(view):
 #    return tweet
 
 
-CONSUMER_TOKEN = '5LdbdnyemT8c87Fc5EVFv9VbG'
-CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
+CONSUMER_TOKEN = 'QBwtZvA52I6qz5ayobHrkjPnd'
+CONSUMER_SECRET = 'xecOS9Wdc4jAbfOycu5WnKHjElEXKp1XfdRqKwMh8khoK2bnFe'
+#CONSUMER_TOKEN = '5LdbdnyemT8c87Fc5EVFv9VbG'
+#CONSUMER_SECRET = 'afBHVZFC7nGRX3rQJsIRtpFgLzn1akR0HOLX4gsCn4GiJULWED'
 from flask import request
 import tweepy
 CALLBACK_URL = 'http://www.thezeitheist.com/verify'
 auth_twitter_session = dict()
 db_twitter = dict() #you can save these values to a database
- 
-@app.route("/api/authtwitter")
+TWITTER_API = None 
+
+@app.route("/api/authtwitter",  methods = ['POST', 'GET'] )
 def send_token():
     auth = tweepy.OAuthHandler(CONSUMER_TOKEN, 
                                CONSUMER_SECRET, 
@@ -252,7 +258,11 @@ def send_token():
         print 'Error! Failed to get request token'
         
 	#this is twitter's url for authentication
-    return flask.redirect(redirect_url)	
+
+    data = { 'redirect_url' : redirect_url }
+    data = json.dumps( data )
+
+    return data
  
 @app.route("/verify")
 def get_verification():
@@ -270,20 +280,115 @@ def get_verification():
     twitter_auth = TwitterAuth( auth.access_token.key, auth.access_token.secret, g.user.id )
     db.session.add( twitter_auth )
     db.session.commit()
-    
-    return flask.render_template('index.html')
+    return redirect( BASE_URL + '/#/dashboard')
+   # return flask.render_template('index.html')
  
 @app.route("/api/twitterPosts")
 def start():
+    global TWITTER_API
     auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
     twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
     auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
-    api = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
-    tweets=api.user_timeline();
+    TWITTER_API = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    tweets=TWITTER_API.user_timeline();
     data = json.dumps( tweets );
-
     return data
 
+def twitterApi():
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
+    auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
+    TWITTER_API = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    return TWITTER_API
+
+@app.route("/api/twitter/favorite/create", methods=['GET', 'POST'])
+def createFavorite():
+    req = request.get_json()
+    id = req['id']
+    twitterAPI = twitterApi()
+    data = twitterAPI.create_favorite( id )
+    data = json.dumps( data )
+    return data
+
+@app.route("/api/twitter/update_status", methods=['GET', 'POST'])
+def replyToTweet():
+    req = request.get_json()
+    status = req['status']
+    in_reply_to_status_id = req['in_reply_to_status_id']
+    twitterAPI = twitterApi()
+  #  raise Exception( in_reply_to_status_id )
+    data = twitterAPI.update_status( status, in_reply_to_status_id=in_reply_to_status_id )
+    data = json.dumps( data )
+    return data
+
+@app.route("/api/searchTwitter", methods=['GET', 'POST'])
+def searchTwitter():
+    searchTerm = request.args['search_term']
+
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
+    auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
+
+    TWITTER_API = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    data = TWITTER_API.search( searchTerm )
+    data = json.dumps( data )
+    return data
+
+@app.route("/api/twitter/convos", methods=['GET', 'POST'])
+def mentions():
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
+    auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
+
+    TWITTER_API = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    mentions = TWITTER_API.mentions_timeline()
+    
+    convos = []
+
+    for item in mentions:
+        if item['in_reply_to_status_id_str']:
+            convos.append( item )
+ 
+    convo_superset = create_superset( convos )
+   
+    data = json.dumps( convo_superset )
+    return data
+
+def create_superset( convos ):
+    auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+    twitter_auth  = TwitterAuth.query.filter( TwitterAuth.user_id == g.user.id ).first() 
+    auth.set_access_token( twitter_auth.access_token_key, twitter_auth.access_token_secret)
+    TWITTER_API = tweepy.API(auth, parser=tweepy.parsers.JSONParser() )
+    
+    convo_superset = []
+
+    for item in convos:
+        convo = []
+        convo.append( item )
+        in_reply_to_status_id_str = item['in_reply_to_status_id_str']
+        while in_reply_to_status_id_str:
+            status = TWITTER_API.get_status( in_reply_to_status_id_str )
+            convo.append( status )
+            in_reply_to_status_id_str = status['in_reply_to_status_id_str']
+        convo_superset.append( convo )
+
+    return convo_superset
+    
+        
+        
+
+@app.route("/api/extractEnts", methods=['GET', 'POST'] )
+def extract_entities():
+    req = request.get_json()
+    text = req['text']
+    entities = []
+    for sent in nltk.sent_tokenize(text):
+        for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
+            if hasattr(chunk, 'node'):
+                for c in chunk.leaves():
+                    entities.append( c[0] )
+    data = json.dumps( entities )
+    return data
 
 @app.errorhandler(500)
 def internal_error(exception):
